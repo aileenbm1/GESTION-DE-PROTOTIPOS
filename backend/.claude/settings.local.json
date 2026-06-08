@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/A_BARR~1.M/AppData/Local/Temp/ai_proto_proj_aeb70dcc30_26j78cyb/**)",
+      "PowerShell(Get-PSDrive C | Select-Object Used, Free, @{N='UsedGB';E={[math]::Round\\($_.Used/1GB,2\\)}}, @{N='FreeGB';E={[math]::Round\\($_.Free/1GB,2\\)}})"
+    ]
+  }
+}

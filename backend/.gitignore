@@ -1,0 +1,31 @@
+# Artefactos generados — excluidos de watchfiles y git
+outputs/
+data_store/
+uploads/
+storage/videos/
+storage/frames/
+storage/debug_sessions/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+*.lock
+npm-debug.log*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+.env
+
+# IDE
+.vscode/
+.vs/
+*.suo
+*.user

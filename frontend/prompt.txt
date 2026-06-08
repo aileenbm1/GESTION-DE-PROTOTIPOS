@@ -1,0 +1,169 @@
+TENGO UN ERROR CRÍTICO EN EL FLUJO DE SUBIDA DE ARCHIVOS ENTRE REACT + AXIOS Y FASTAPI.
+
+ERROR ACTUAL:
+HTTP 400 Bad Request
+
+Mensaje:
+"No fue posible parsear multipart/form-data. Verifica que Axios no establezca Content-Type manualmente y que el body incluya el campo 'file'."
+
+========================================================
+OBJETIVO
+========
+
+Quiero que analices TODO el flujo upload frontend/backend y lo dejes enterprise, robusto y listo para producción.
+
+NO quiero teoría.
+Quiero correcciones reales y pruebas reales.
+
+========================================================
+ANALIZAR FRONTEND REACT
+=======================
+
+Revisar:
+
+* api.ts
+* UploadPage.tsx
+* projectStore.ts
+* Axios instance
+* interceptors
+* FormData
+* headers
+* body
+* límites de tamaño
+
+VALIDAR:
+
+* que el campo se llame EXACTAMENTE "file"
+* que Axios NO configure manualmente Content-Type multipart/form-data
+* que Axios deje generar automáticamente el boundary
+* que se use FormData real
+* que NO se serialice JSON
+* que NO haya interceptors modificando body
+* que no haya transformRequest rompiendo multipart
+
+========================================================
+IMPLEMENTAR FRONTEND CORRECTO
+=============================
+
+La subida debe quedar así:
+
+const formData = new FormData();
+formData.append("file", file);
+
+await api.post(
+`/projects/${projectId}/upload`,
+formData,
+{
+maxBodyLength: Infinity,
+maxContentLength: Infinity,
+headers: {
+Accept: "application/json"
+}
+}
+);
+
+NO establecer:
+Content-Type: multipart/form-data
+
+========================================================
+ANALIZAR BACKEND FASTAPI
+========================
+
+Revisar:
+
+* main.py
+* routes.py
+* upload endpoint
+* FileStore
+* save_upload
+* middlewares
+* CORS
+* body parsers
+
+VALIDAR:
+
+* que exista python-multipart
+* que UploadFile esté correcto
+* que File(...) esté correcto
+* que no haya middleware consumiendo el body antes
+* que no se lea el archivo completo en memoria
+* que el upload soporte archivos grandes
+
+========================================================
+IMPLEMENTAR BACKEND ROBUSTO
+===========================
+
+El endpoint debe:
+
+1. Validar archivo
+2. Validar extensión
+3. Validar tamaño
+4. Guardar en chunks
+5. Registrar logs reales
+6. Manejar excepciones
+7. Retornar errores claros
+
+Implementar guardado en chunks:
+
+while chunk := await file.read(1024 * 1024):
+buffer.write(chunk)
+
+PROHIBIDO:
+content = await file.read()
+
+========================================================
+AGREGAR LOGS ENTERPRISE
+=======================
+
+Agregar logs:
+
+* request recibido
+* filename
+* content-type
+* tamaño
+* progreso
+* errores reales
+* traceback completo
+
+========================================================
+REALIZAR PRUEBAS AUTOMÁTICAS
+============================
+
+Debes:
+
+1. levantar backend
+2. levantar frontend
+3. subir archivos reales
+4. probar mp3
+5. probar mp4
+6. probar wav
+7. probar archivos grandes
+8. validar que el flujo funcione end-to-end
+
+========================================================
+SI HAY ERRORES
+==============
+
+Debes:
+
+* corregir automáticamente
+* recompilar
+* volver a probar
+* documentar qué corregiste
+
+========================================================
+OBJETIVO FINAL
+==============
+
+Quiero un flujo upload enterprise:
+
+* robusto
+* estable
+* tolerante a errores
+* listo para producción
+* compatible con archivos grandes
+* funcional end-to-end
+
+NO quiero ejemplos.
+NO quiero pseudocódigo.
+Quiero el código corregido en el proyecto real.

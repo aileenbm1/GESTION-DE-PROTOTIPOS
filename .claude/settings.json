@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"from services.prototype_validator import PrototypeValidator; print\\('prototype_validator OK'\\)\")"
+    ]
+  }
+}

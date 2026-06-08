@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\a_barrientos.m\\\\GESTION DE PROTOTIPOS\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(Find \"C:\\\\Users\\\\a_barrientos.m\\\\GESTION DE PROTOTIPOS\" -name \".env\" -o -name \".env.example\" -o -name \".env.local\")",
+      "Bash(python -c \"from orchestrator.orchestrator import PrototypeOrchestrator; print\\('orchestrator OK'\\)\")",
+      "Bash(python -c \"from api.routes import router; print\\('routes OK'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(curl -s -X POST \"http://127.0.0.1:8000/api/projects/proj_9e76489acd/upload\" -F \"file=@c:/Windows/System32/drivers/etc/hosts\" -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\")",
+      "Bash(curl -s -X POST \"http://127.0.0.1:8000/api/projects/proj_9e76489acd/upload\" -F \"file=@c:/Windows/Temp/test_upload.mp4\" -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\")",
+      "Bash(npx tsc *)",
+      "Bash(curl -s -X POST \"http://127.0.0.1:8000/api/projects/proj_4a90ba8d54/upload\" -F \"file=@c:/Windows/Temp/test_audio.mp3;type=audio/mpeg\" -w \"\\\\nHTTP_STATUS:%{http_code}\\\\n\")",
+      "Bash(python -c \"import sys,json; lines=sys.stdin.read\\(\\).splitlines\\(\\); status=lines[-1]; body='\\\\n'.join\\(lines[:-1]\\); d=json.loads\\(body\\); print\\(status, '| status:', d.get\\('status'\\), '| upload_path set:', bool\\(d.get\\('upload_path'\\)\\)\\)\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":8000\")",
+      "Bash(grep -rn \"get.*\\\\/projects[^\\\\/]\" \"C:\\\\Users\\\\a_barrientos.m\\\\GESTION DE PROTOTIPOS\\\\frontend\\\\src\")",
+      "Bash(grep -rn \"\\\\/projects'\" \"C:\\\\Users\\\\a_barrientos.m\\\\GESTION DE PROTOTIPOS\\\\frontend\\\\src\")",
+      "Bash(grep -rn \"\\\\/projects[^\\\\/\\\\$]\" \"C:\\\\Users\\\\a_barrientos.m\\\\GESTION DE PROTOTIPOS\\\\frontend\\\\src\")",
+      "Bash(grep -rn \"api/projects\\\\b\\\\|\\\\/projects\\\\b\" \"C:\\\\Users\\\\a_barrientos.m\\\\GESTION DE PROTOTIPOS\\\\frontend\\\\src\")",
+      "Read(//c/Users/a_barrientos.m/Downloads/**)",
+      "Bash(grep -n \"backslash\\\\|\\\\\\\\\\\\\\\\-\\\\\\\\\\\\\\\\\\\\|replace.*\\\\\\\\\\\\\\\\\\\\\"\" \"C:\\\\Users\\\\a_barrientos.m\\\\GESTION DE PROTOTIPOS\\\\backend\\\\services\\\\generation_service.py\")",
+      "Bash(python -c \"from services.generation_service import GenerationService; print\\('OK'\\)\")",
+      "Read(//c/Users/a_barrientos.m/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/58db699f-f84b-460f-a212-bac84bad4224/1ef4a30c-39fe-4d10-850f-441bdfa03ff3/skills/docx/**)",
+      "Bash(python scripts/office/unpack.py \"C:\\\\Users\\\\a_barrientos.m\\\\Downloads\\\\REQM-EsteEsTuMomento 251024 15_20.docx\" unpacked_reqm/)",
+      "Bash(pip install *)",
+      "Bash(pandoc unpacked_reqm/word/document.xml -f docx -t markdown)",
+      "Bash(ls -la \"C:\\\\Users\\\\a_barrientos.m\\\\OneDrive - Secretaría de Educación de Guanajuato\\\\Seguimiento de Requisitos - Documentos\\\\Grabación .mp4\" 2>&1)",
+      "Bash(python -c \"import os; print\\('ENDPOINT:', os.getenv\\('AZURE_OPENAI_ENDPOINT',''\\)[:40]\\); print\\('KEY:', os.getenv\\('AZURE_OPENAI_API_KEY',''\\)[:10]+'...' if os.getenv\\('AZURE_OPENAI_API_KEY'\\) else 'EMPTY'\\); print\\('TRANS:', os.getenv\\('AZURE_OPENAI_TRANSCRIPTION_DEPLOYMENT',''\\)\\)\")",
+      "Bash(pip show *)",
+      "Bash(python -c \"import whisper; print\\('whisper ok'\\)\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\a_barrientos.m\\.claude\\projects\\c--Users-a-barrientos-m-GESTION-DE-PROTOTIPOS\\memory"
+    ]
+  }
+}

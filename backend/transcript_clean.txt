@@ -1,0 +1,30 @@
+Después de analizar los resultados del año anterior, el propósito del sistema es capturar preguntas realizadas por los diputados, transcribirlas y buscar respuestas en repositorios institucionales confiables, específicamente en SharePoint. El sistema generará respuestas sustentadas con datos duros y producirá un documento en un formato detallado que será entregado directamente al secretario. Además, incluirá la funcionalidad de capturar audio en sitio a través de un dispositivo configurado. Este audio será transcrito automáticamente, y el texto resultante será revisado y corregido antes de ser procesado.
+
+El sistema deberá garantizar que solo un agente autorizado, identificado como RLME o un revisor designado, pueda responder con información oficial extraída de los documentos en SharePoint. También se implementará una jerarquía obligatoria para la búsqueda de información, comenzando por el nivel 2 y luego el nivel 1, siguiendo un orden cronológico si es necesario.
+
+El sistema generará documentos formateados automáticamente, incluyendo los datos del diputado que realizó la pregunta (nombre, fotografía y partido político). Esto permitirá la trazabilidad y el seguimiento de las preguntas y respuestas. Además, el alcance del proyecto incluye la automatización de la publicación de respuestas basadas en evidencia institucional, evitando opiniones o fuentes no oficiales, y el uso de reconocimiento facial para validar la identidad de los usuarios.
+
+### Roles del sistema:
+1. **Operador de sesión**: Encargado de iniciar la captura, supervisar la transcripción y disparar la creación de tarjetas de preguntas.
+2. **Administrador de conocimiento**: Responsable de cargar y actualizar documentos en SharePoint, así como de definir las reglas y permisos de acceso.
+3. **Revisor**: Persona encargada de validar y oficializar las respuestas generadas.
+4. **Auditor**: Responsable de revisar la autenticidad y evidencia de las respuestas y tarjetas generadas.
+
+El sistema se alimentará exclusivamente de documentos cargados en SharePoint con autorización explícita. 
+
+### Requerimientos funcionales:
+1. **Captura de audio en vivo**: El sistema debe capturar audio en tiempo real desde un dispositivo configurado, permitiendo iniciar y detener la grabación según el diputado o tema. El audio debe incluir metadatos como fecha, hora y sesión.
+2. **Transcripción automática**: El sistema debe transcribir el audio en tiempo real, permitiendo correcciones rápidas antes de enviar el texto al repositorio.
+3. **Limpieza de texto**: El sistema debe procesar el texto transcrito para eliminar errores y garantizar que las preguntas estén correctamente formuladas.
+4. **Respuestas basadas en fuentes institucionales**: El sistema debe generar respuestas únicamente con información recuperada de repositorios autorizados en SharePoint, incluyendo referencias a las fuentes consultadas.
+5. **Jerarquía de búsqueda**: El sistema debe buscar información siguiendo un orden jerárquico. Por ejemplo, primero buscar en documentos específicos (como matrices en carpetas designadas) y, si no encuentra resultados, pasar a otros niveles de búsqueda.
+6. **Formato de respuesta**: Las respuestas deben incluir datos claros, porcentajes, series comparativas y gráficos cuando sea necesario, sin agregar información irrelevante.
+7. **Generación de documentos**: El sistema debe generar un archivo de Word por diputado, incluyendo encabezado, nombre, fotografía, partido político, preguntas capturadas en texto, respuestas generadas y fuentes consultadas. Este documento debe cumplir con un formato institucional predefinido.
+
+### Requerimientos no funcionales:
+1. **Seguridad y control de acceso**: Implementar autenticación institucional (por ejemplo, mediante Active Directory) y control de roles para definir permisos de operadores, administradores, revisores y auditores. El acceso a SharePoint debe respetar los permisos existentes.
+2. **Privacidad y manejo de datos**: Garantizar la protección de datos sensibles y evitar la exposición de información fuera del perímetro institucional.
+3. **Disponibilidad y continuidad**: El sistema debe soportar sesiones largas (de varias horas) sin pérdida de audio ni transcripción, y contar con mecanismos de recuperación ante fallas.
+4. **Desempeño**: La transcripción y generación de respuestas deben realizarse en tiempo real o con un retraso mínimo, garantizando eficiencia en la operación.
+
+Este sistema busca optimizar la gestión de preguntas y respuestas en sesiones legislativas, asegurando precisión, trazabilidad y cumplimiento con estándares institucionales.

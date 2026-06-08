@@ -1,0 +1,106 @@
+{
+  "transcript_len": 4601,
+  "modules": [
+    "Captura de Preguntas en Vivo",
+    "Transcripción Automática",
+    "Gestión de Respuestas Oficiales",
+    "Generación de Documentos Institucionales",
+    "Integración con SharePoint",
+    "Validación de Identidad y Seguridad"
+  ],
+  "entities": [
+    "Pregunta",
+    "Respuesta",
+    "Diputado",
+    "Documento Institucional",
+    "Repositorio SharePoint",
+    "Sesión Legislativa"
+  ],
+  "roles": [
+    "Operador de sesión",
+    "Administrador de conocimiento",
+    "Revisor",
+    "Auditor",
+    "Diputado",
+    "Secretario"
+  ],
+  "requirements_count": 5,
+  "requirements": [
+    {
+      "id": "RF-001",
+      "title": "Captura de audio en vivo para preguntas legislativas",
+      "module": "Captura de Preguntas en Vivo",
+      "priority": "high",
+      "description": "El sistema debe permitir al Operador de sesión capturar audio en tiempo real durante una sesión legi",
+      "workflows_count": 5,
+      "entities": [
+        "Pregunta",
+        "Sesión Legislativa"
+      ],
+      "actors": [
+        "Operador de sesión"
+      ]
+    },
+    {
+      "id": "RF-002",
+      "title": "Transcripción automática del audio capturado",
+      "module": "Transcripción Automática",
+      "priority": "high",
+      "description": "El sistema debe procesar el audio capturado en tiempo real para generar una transcripción automática",
+      "workflows_count": 5,
+      "entities": [
+        "Pregunta",
+        "Sesión Legislativa"
+      ],
+      "actors": [
+        "Revisor"
+      ]
+    },
+    {
+      "id": "RF-003",
+      "title": "Generación de respuestas oficiales basadas en SharePoint",
+      "module": "Gestión de Respuestas Oficiales",
+      "priority": "high",
+      "description": "El sistema debe permitir al Administrador de conocimiento buscar información en SharePoint, seleccio",
+      "workflows_count": 5,
+      "entities": [
+        "Respuesta",
+        "Repositorio SharePoint",
+        "Pregunta"
+      ],
+      "actors": [
+        "Administrador de conocimiento"
+      ]
+    },
+    {
+      "id": "RF-004",
+      "title": "Producción de documentos institucionales formateados",
+      "module": "Generación de Documentos Institucionales",
+      "priority": "medium",
+      "description": "El sistema debe recopilar datos del diputado y la sesión legislativa para generar un documento insti",
+      "workflows_count": 5,
+      "entities": [
+        "Documento Institucional",
+        "Diputado",
+        "Sesión Legislativa"
+      ],
+      "actors": [
+        "Secretario"
+      ]
+    },
+    {
+      "id": "RF-005",
+      "title": "Validación de identidad mediante reconocimiento facial",
+      "module": "Validación de Identidad y Seguridad",
+      "priority": "high",
+      "description": "El sistema debe validar la identidad de los usuarios mediante reconocimiento facial antes de permiti",
+      "workflows_count": 5,
+      "entities": [
+        "Usuario"
+      ],
+      "actors": [
+        "Todos los roles"
+      ]
+    }
+  ]
+}

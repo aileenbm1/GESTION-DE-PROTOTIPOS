@@ -1,0 +1,357 @@
+﻿from __future__ import annotations
+
+import logging
+import os
+import socket
+import traceback
+from pathlib import Path
+
+import uvicorn
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
+
+from api.routes import router as api_router
+from api.websocket_routes import router as websocket_router
+from api.debug_routes import router as debug_router
+from storage.file_store import MAX_UPLOAD_BYTES, MAX_UPLOAD_MB
+from utils.logger import configure_logging
+
+configure_logging()
+logger = logging.getLogger(__name__)
+
+
+
+def _reload_excludes() -> list[str]:
+    return [
+        "outputs/*",
+        "outputs/**",
+        "data_store/*",
+        "data_store/**",
+        "uploads/*",
+        "uploads/**",
+        "**/node_modules/**",
+        "**/.angular/**",
+        "**/dist/**",
+        "**/generated/**",
+        "**/__pycache__/**",
+        "storage/videos/**",
+        "storage/frames/**",
+        "storage/debug_sessions/**",
+    ]
+
+
+def _reload_dirs() -> list[str]:
+    # Watch only source directories. Do NOT watch backend root, because it contains
+    # generated artifacts under outputs/** that can trigger reload during npm install.
+    base = Path(__file__).resolve().parent
+    return [
+        str(base / "api"),
+        str(base / "agents"),
+        str(base / "models"),
+        str(base / "orchestrator"),
+        str(base / "services"),
+        str(base / "utils"),
+        str(base / "websocket"),
+    ]
+
+
+def _reload_includes() -> list[str]:
+    return ["*.py"]
+
+
+def _cors_origins() -> list[str]:
+    raw = os.getenv(
+        "AI_PROTO_CORS_ORIGINS",
+        "http://localhost:4200,http://127.0.0.1:4200,http://localhost:5173,http://127.0.0.1:5173",
+    )
+
+    origins = [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+    if origins:
+        return origins
+
+    return [
+        "http://localhost:4200",
+        "http://127.0.0.1:4200",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+
+
+async def _empty_receive() -> Message:
+    return {
+        "type": "http.request",
+        "body": b"",
+        "more_body": False,
+    }
+
+
+class UploadSizeLimitMiddleware:
+    def __init__(self, app: ASGIApp, max_bytes: int) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        method = scope.get("method", "")
+
+        if method != "POST" or not path.endswith("/upload"):
+            await self.app(scope, receive, send)
+            return
+
+        headers = {
+            key.decode("latin-1").lower(): value.decode("latin-1")
+            for key, value in scope.get("headers", [])
+        }
+
+        content_length = headers.get("content-length")
+
+        if content_length:
+            try:
+                declared_size = int(content_length)
+            except ValueError:
+                declared_size = 0
+
+            if declared_size > self.max_bytes:
+                await self._send_413(scope, send, content_length)
+                return
+
+        response_sent = False
+        disconnected = False
+        received = 0
+
+        async def guarded_send(message: Message) -> None:
+            nonlocal response_sent
+
+            if disconnected:
+                return
+
+            if message["type"] == "http.response.start":
+                response_sent = True
+
+            await send(message)
+
+        async def reject_stream(size: int) -> None:
+            nonlocal disconnected
+
+            disconnected = True
+
+            if not response_sent:
+                await self._send_413(scope, send, str(size))
+
+        async def limited_receive() -> Message:
+            nonlocal received
+
+            message = await receive()
+
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+
+                if received > self.max_bytes:
+                    logger.warning(
+                        "upload.request.too_large_stream path=%s received=%s max=%s",
+                        path,
+                        received,
+                        self.max_bytes,
+                    )
+                    await reject_stream(received)
+                    return {"type": "http.disconnect"}
+
+            return message
+
+        await self.app(scope, limited_receive, guarded_send)
+
+    async def _send_413(self, scope: Scope, send: Send, size: str) -> None:
+        logger.warning(
+            "upload.request.too_large content_length=%s max_mb=%s",
+            size,
+            MAX_UPLOAD_MB,
+        )
+
+        response = JSONResponse(
+            status_code=413,
+            content={"detail": f"Archivo demasiado grande. Limite: {MAX_UPLOAD_MB}MB"},
+        )
+
+        await response(scope, _empty_receive, send)
+
+
+class JsonUnhandledExceptionMiddleware:
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        try:
+            await self.app(scope, receive, send)
+        except HTTPException:
+            raise
+        except Exception as exc:
+            logger.exception(
+                "request.unhandled_fallback path=%s method=%s error=%s",
+                scope.get("path"),
+                scope.get("method"),
+                repr(exc),
+            )
+            traceback.print_exc()
+
+            response = JSONResponse(
+                status_code=500,
+                content={
+                    "detail": str(exc),
+                    "type": type(exc).__name__,
+                },
+            )
+
+            await response(scope, _empty_receive, send)
+
+
+app = FastAPI(title="AI Prototype Backend", version="1.0.0")
+
+# Keep internal middlewares first and CORS last so CORS wraps every response path,
+# including errors generated by custom middleware and exception handlers.
+app.add_middleware(UploadSizeLimitMiddleware, max_bytes=MAX_UPLOAD_BYTES)
+app.add_middleware(JsonUnhandledExceptionMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins(),
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+
+app.include_router(api_router)
+app.include_router(websocket_router)
+app.include_router(debug_router)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    detail = exc.detail
+
+    multipart_parse_error = (
+        exc.status_code == 400
+        and isinstance(detail, str)
+        and (
+            "parsing the body" in detail.lower()
+            or "multipart" in detail.lower()
+            or "boundary" in detail.lower()
+        )
+    )
+
+    if multipart_parse_error:
+        logger.exception(
+            "request.body.parse_error path=%s method=%s content_type=%r content_length=%r",
+            request.url.path,
+            request.method,
+            request.headers.get("content-type"),
+            request.headers.get("content-length"),
+        )
+
+        detail = (
+            "No fue posible parsear multipart/form-data. "
+            "Verifica que Axios NO establezca Content-Type manualmente "
+            "y que el FormData incluya el campo 'file'."
+        )
+    else:
+        logger.warning(
+            "request.http_error path=%s method=%s status=%s detail=%r",
+            request.url.path,
+            request.method,
+            exc.status_code,
+            detail,
+        )
+
+    return JSONResponse(status_code=exc.status_code, content={"detail": detail})
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    logger.warning(
+        "request.validation_error path=%s method=%s errors=%s",
+        request.url.path,
+        request.method,
+        exc.errors(),
+    )
+
+    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    traceback.print_exc()
+    logger.exception(
+        "request.unhandled_error path=%s method=%s error=%s",
+        request.url.path,
+        request.method,
+        repr(exc),
+    )
+
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": str(exc),
+            "type": type(exc).__name__,
+        },
+    )
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {"message": "Backend funcionando"}
+
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+
+
+if __name__ == "__main__":
+    requested_port = int(os.getenv("AI_PROTO_BACKEND_PORT", "8000"))
+    fallback_port_raw = os.getenv("AI_PROTO_BACKEND_FALLBACK_PORT")
+    host = os.getenv("AI_PROTO_BACKEND_HOST", "127.0.0.1")
+    port = requested_port
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        if sock.connect_ex(("127.0.0.1", requested_port)) == 0:
+            if fallback_port_raw:
+                port = int(fallback_port_raw)
+                logger.warning(
+                    "backend.port_in_use requested=%s fallback=%s",
+                    requested_port,
+                    port,
+                )
+            else:
+                logger.error(
+                    "backend.port_in_use requested=%s fallback=disabled. "
+                    "Define AI_PROTO_BACKEND_FALLBACK_PORT to allow automatic fallback "
+                    "or stop the process currently using this port.",
+                    requested_port,
+                )
+                raise SystemExit(1)
+    uvicorn.run(
+        "main:app",
+        host=host,
+        port=port,
+        reload=True,
+        reload_dirs=_reload_dirs(),
+        reload_includes=_reload_includes(),
+        reload_excludes=_reload_excludes(),
+    )
+
+
